@@ -1,4 +1,7 @@
 import configparser
+import psycopg2
+from psycopg2.pool import SimpleConnectionPool
+from psycopg2 import Error
 
 def config(filename = 'database.ini', section = 'postgresql'):
     parser = configparser.RawConfigParser()
@@ -17,4 +20,21 @@ def config(filename = 'database.ini', section = 'postgresql'):
         
     return db
 
-# config(filename = 'database.ini', section = 'postgresql')
+postgresSQLparams = config('database.ini', 'postgresql')
+
+print(f"Connecting to the PostgreSQL database '{postgresSQLparams['database']}'...\n")
+
+try:
+    postgresql_pool = SimpleConnectionPool(1, 20, **postgresSQLparams)
+    if postgresql_pool:
+        print("Пул соединений создан успешно")
+except (Exception, Error) as error :
+  print ("Ошибка при подключении к PostgreSQL", error)
+
+
+# params = config()
+# print(f"Connecting to the PostgreSQL database '{params['database']}'...\n")
+
+# postgresql_pool = SimpleConnectionPool(1, 20, **params)
+# if postgresql_pool:
+#     print("Пул соединений создан успешно")

@@ -2,22 +2,8 @@ import datetime
 from typing import List, Tuple
 import psycopg2
 from psycopg2.extras import execute_values
-from config import config
 
-def connectPostgre():
-    conn = None
-    try:
-        params = config(filename = 'database.ini', section = 'postgresql')
-        print(f"Connecting to the PostgreSQL database '{params['database']}'...\n")
-        # print(params)
-        conn = psycopg2.connect(**params)
-        return conn
-    except (Exception, psycopg2.DatabaseError) as error:
-        print(error)
-
-
-
-connection = connectPostgre()
+from config import postgresql_pool
 
 Poll = Tuple[int, str, str]
 Vote = Tuple[str, int]
@@ -86,13 +72,16 @@ SELECT_VOTE_RESULTS = """
 ;"""
 
 def create_tables():
-    with connection:
+    connection = postgresql_pool.getconn()
+    with connection:    
         with connection.cursor() as cursor:
             cursor.execute(CREATE_POLLS)
             cursor.execute(CREATE_OPTIONS)
             cursor.execute(CREATE_VOTES)
+    postgresql_pool.putconn(connection)
 
 def create_poll(title: str, owner: str, options: List[str]):
+    connection = postgresql_pool.getconn()
     with connection:
         with connection.cursor() as cursor:
             ts = datetime.datetime.now().timestamp()
@@ -101,36 +90,47 @@ def create_poll(title: str, owner: str, options: List[str]):
 
             option_values = [(poll_id, option_text) for option_text in options]
             execute_values(cursor, INSERT_OPTION, option_values)
+    postgresql_pool.putconn(connection)
+    
 
 def add_option(poll_id: int, option_text: str):
+    connection = postgresql_pool.getconn()
     with connection:
         with connection.cursor() as cursor:
             cursor.execute(INSERT_OPTION, (poll_id, option_text,))
+    postgresql_pool.putconn(connection)
 
 def add_vote(option_id: str, username: str):
+    connection = postgresql_pool.getconn()
     with connection:
         with connection.cursor() as cursor:
             cursor.execute(INSERT_VOTE, (option_id, username,))
+    postgresql_pool.putconn(connection)
 
 def get_all_polls() -> list[Poll]:
+    connection = postgresql_pool.getconn()
     with connection:
         with connection.cursor() as cursor:
             cursor.execute(SELECT_ALL_POLLS)
+            postgresql_pool.putconn(connection)
             return cursor.fetchall()
 
 def get_poll(id: int) -> Poll:
+    connection = postgresql_pool.getconn()
     with connection:
         with connection.cursor() as cursor:
             cursor.execute(SELECT_POLL, (id,))
             return cursor.fetchone()
 
 def get_poll_options(poll_id: int) -> list[PollwithOption]:
+    connection = postgresql_pool.getconn()
     with connection:
         with connection.cursor() as cursor:
             cursor.execute(SELECT_POLL_WITH_OPTIONS, (poll_id,))
             return cursor.fetchall()
 
 def get_poll_and_vote_results(poll_id: int) -> list[PollResults]:
+    connection = postgresql_pool.getconn()
     with connection:
         with connection.cursor() as cursor:
             cursor.execute(SELECT_VOTE_RESULTS, (poll_id,))
@@ -138,9 +138,8 @@ def get_poll_and_vote_results(poll_id: int) -> list[PollResults]:
 
 
 def get_random_poll_vote(option_id: int) -> Vote:
+    connection = postgresql_pool.getconn()
     with connection:
         with connection.cursor() as cursor:
             cursor.execute(SELECT_RANDOME_VOTE, (option_id,))
             return cursor.fetchone()
-
-

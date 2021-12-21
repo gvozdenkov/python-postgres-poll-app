@@ -1,5 +1,6 @@
 import datetime
 import database
+from config import postgresql_pool
 
 welcome = "Welcome to the poll app!\n"
 
@@ -88,6 +89,10 @@ def menu():
             menu_options[selection]()
         except KeyError:
             print("invalid input. Try again")
+    
+    if postgresql_pool:
+        postgresql_pool.closeall
+    print("Пул соединений PostgreSQL закрыт")
 
 
 
