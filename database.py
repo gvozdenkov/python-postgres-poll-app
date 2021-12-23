@@ -3,6 +3,8 @@ from typing import List, Tuple
 import psycopg2
 from psycopg2.extras import execute_values
 from contextlib import contextmanager
+from functools import wraps
+import time
 
 from config import postgresql_pool
 
@@ -86,6 +88,18 @@ def get_cursor(connection):
         with connection.cursor() as cursor:
             yield cursor
 
+def timer(func):
+    # Выводит в консоль время выполенения функции
+    @wraps(func)
+    def wrapper_timer(*args, **kwargs):
+        start_time = time.perf_counter()
+        value = func(*args, **kwargs)
+        end_time = time.perf_counter()
+        run_time = end_time - start_time
+        print(f"Function {func.__name__} finished in {run_time:.4f} secs")
+        return value
+    return wrapper_timer
+
 def create_tables():
     with get_connection() as connection:    
         with get_cursor(connection) as cursor:
@@ -93,6 +107,7 @@ def create_tables():
             cursor.execute(CREATE_OPTIONS)
             cursor.execute(CREATE_VOTES)
 
+@timer
 def create_poll(title: str, owner: str, options: List[str]):
     with get_connection() as connection:
         with get_cursor(connection) as cursor:
