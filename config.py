@@ -31,10 +31,3 @@ try:
 except (Exception, Error) as error :
   print ("Ошибка при подключении к PostgreSQL", error)
 
-
-# params = config()
-# print(f"Connecting to the PostgreSQL database '{params['database']}'...\n")
-
-# postgresql_pool = SimpleConnectionPool(1, 20, **params)
-# if postgresql_pool:
-#     print("Пул соединений создан успешно")

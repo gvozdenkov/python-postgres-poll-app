@@ -1,4 +1,5 @@
 import datetime
+import pytz
 from typing import List, Tuple
 import psycopg2
 from psycopg2.extras import execute_values
@@ -111,8 +112,10 @@ def create_tables():
 def create_poll(title: str, owner: str, options: List[str]):
     with get_connection() as connection:
         with get_cursor(connection) as cursor:
-            ts = datetime.datetime.now().timestamp()
-            cursor.execute(INSERT_POLL, (title, owner, ts,))
+            currentDatetimeUTC = datetime.datetime.now(tz=pytz.utc)
+            currentTimestamp = currentDatetimeUTC.timestamp()
+            # ts = datetime.datetime.now().timestamp()
+            cursor.execute(INSERT_POLL, (title, owner, currentTimestamp,))
             poll_id = cursor.fetchone()[0]
             option_values = [(poll_id, option_text) for option_text in options]
             execute_values(cursor, INSERT_OPTION, option_values)

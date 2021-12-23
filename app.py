@@ -1,4 +1,6 @@
 import datetime
+
+import pytz
 import database
 from config import postgresql_pool
 
@@ -19,8 +21,12 @@ def prompt_create_poll():
 def list_all_polls():
     polls = database.get_all_polls()
     for _id, title, owner, ts in polls:
-        ts = datetime.datetime.fromtimestamp(ts).strftime('%d.%m.%Y %H:%M')
-        print(f"{_id} poll with title '{title}' (created by {owner} at {ts})")
+        # ts = datetime.datetime.fromtimestamp(ts).strftime('%d.%m.%Y %H:%M')
+        naive_datetime = datetime.datetime.utcfromtimestamp(ts)
+        utc_date = pytz.utc.localize(naive_datetime)
+        local_date = utc_date.astimezone(pytz.timezone('Europe/Moscow'))
+        local_date_str = local_date.strftime('%d.%m.%Y %H:%M')
+        print(f"{_id} poll with title '{title}' (created by {owner} at {local_date_str})")
 
 def print_poll_options(poll_with_option: list[database.PollwithOption]):
     print(f"poll '{poll_with_option[0][1]}' with option:")
